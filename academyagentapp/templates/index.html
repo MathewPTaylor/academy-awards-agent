@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified AI Chat Interface</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom scrollbar for a polished look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.5);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(107, 114, 128, 0.8);
+        }
+    </style>
+    <style>
+        h1 { font-size: 2.25rem; font-weight: 700; line-height: 2.5rem; }     /* text-4xl */
+        h2 { font-size: 1.875rem; font-weight: 700; line-height: 2.25rem; }  /* text-3xl */
+        h3 { font-size: 1.5rem; font-weight: 600; line-height: 2rem; }       /* text-2xl */
+        h4 { font-size: 1.25rem; font-weight: 600; line-height: 1.75rem; }    /* text-xl */
+        /* code {padding: 5px; background: #222; border-radius: 5px; } */
+    </style>
+</head>
+<body class="bg-[#1e1f22] text-[#f3f4f6] font-sans h-screen flex overflow-hidden">
+
+    <!-- SIDEBAR (ChatGPT Style) -->
+    <aside id="sidebar" class="bg-[#121212] w-64 flex flex-col justify-between transition-all duration-300 z-20 border-r border-gray-800">
+        <!-- Top: New Chat & History -->
+        <div class="p-3 flex flex-col gap-2">
+            <button onclick="startNewChat()" class="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-gray-700 hover:bg-gray-800 text-sm font-medium transition-colors">
+                <span class="flex items-center gap-2"><i class="fa-solid fa-plus"></i> New chat</span>
+                <i class="fa-regular fa-pen-to-square text-gray-400"></i> 
+            </button>
+            
+            <div class="text-xs font-semibold text-gray-500 px-3 pt-4 pb-2">Recent</div>
+            <div class="flex flex-col gap-1 overflow-y-auto max-h-[calc(100vh-200px)]">
+                <button class="text-left px-3 py-2 rounded-lg hover:bg-gray-800 text-sm truncate text-gray-300">Building a Gemini UI in HTML</button>
+                <button class="text-left px-3 py-2 rounded-lg hover:bg-gray-800 text-sm truncate text-gray-300">Tailwind layout tips</button>
+                <button class="text-left px-3 py-2 rounded-lg hover:bg-gray-800 text-sm truncate text-gray-300">Debugging JavaScript promises</button>
+            </div>
+        </div>
+
+        <!-- Bottom User Profile -->
+        <div class="p-3 border-t border-gray-800">
+            <div class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 cursor-pointer">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-500 flex items-center justify-center font-bold text-white text-sm">U</div>
+                <span class="text-sm font-medium truncate">{{ username if username else "User Profile" }}</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CHAT AREA -->
+    <main class="flex-1 flex flex-col h-full bg-[#1e1f22] relative">
+        
+        <!-- TOP NAVBAR -->
+        <header class="h-14 border-b border-gray-800 flex items-center justify-between px-4 bg-[#1e1f22]/80 backdrop-blur z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-800 transition-colors">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <!-- Model Selector Dropdown (Gemini/Claude/GPT switcher vibe) -->
+                <div class="relative">
+                    <select class="bg-transparent text-lg font-semibold text-gray-200 focus:outline-none cursor-pointer appearance-none pr-6">
+                        <option class="bg-[#1e1f22]">Nexus AI 3.5 (Claude-Style)</option>
+                        <option class="bg-[#1e1f22]">GPT-4o Omni</option>
+                        <option class="bg-[#1e1f22]">Gemini 1.5 Pro</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down text-xs text-gray-400 absolute right-0 top-2 pointer-events-none"></i>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button class="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow hover:opacity-90 transition">
+                    <i class="fa-solid fa-sparkles mr-1"></i> Upgrade
+                </button>
+            </div>
+        </header>
+
+        <!-- CHAT MESSAGES CONTAINER -->
+        <div id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col items-center">
+            
+            <!-- Welcome / Empty State (Claude/Gemini Inspired) -->
+            <div id="welcome-screen" class="my-auto text-center max-w-xl w-full flex flex-col items-center">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-400 via-indigo-500 to-purple-500 flex items-center justify-center text-2xl text-white mb-4 shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-gray-100 mb-2">Hello, Developer</h1>
+                <p class="text-gray-400 text-sm mb-8">How can I help you build, code, or create today?</p>
+                
+                <!-- Starter Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full text-left">
+                    <div onclick="sendPreset('Brainstorm product names for an AI note-taking app')" class="p-3.5 rounded-xl border border-gray-800 bg-[#2b2c30]/50 hover:bg-[#2b2c30] cursor-pointer transition flex flex-col justify-between">
+                        <span class="text-sm text-gray-200 font-medium">Brainstorm product names</span>
+                        <span class="text-xs text-gray-500 mt-2">For an AI note-taking app</span>
+                    </div>
+                    <div onclick="sendPreset('Write a python script to parse CSV data')" class="p-3.5 rounded-xl border border-gray-800 bg-[#2b2c30]/50 hover:bg-[#2b2c30] cursor-pointer transition flex flex-col justify-between">
+                        <span class="text-sm text-gray-200 font-medium">Write a python script</span>
+                        <span class="text-xs text-gray-500 mt-2">To parse and clean CSV data</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Chat Messages Will Append Here -->
+            <div id="message-list" class="w-full max-w-3xl flex flex-col gap-6 hidden"></div>
+        </div>
+
+        <!-- INPUT BAR AREA -->
+        <div class="p-4 bg-[#1e1f22] max-w-3xl w-full mx-auto">
+            <div class="bg-[#2b2c30] rounded-2xl border border-gray-700/60 p-2 shadow-lg focus-within:border-gray-500 transition-all">
+                <textarea id="user-input" rows="1" placeholder="Message Nexus AI..." class="w-full bg-transparent text-gray-100 placeholder-gray-400 text-sm focus:outline-none resize-none px-3 py-1.5 max-h-36"></textarea>
+                
+                <!-- Bottom Toolbar inside Input Box -->
+                <div class="flex items-center justify-between px-2 pt-2 border-t border-gray-700/40 mt-1">
+                    <div class="flex items-center gap-1 text-gray-400">
+                        <button class="p-1.5 hover:text-white rounded-lg hover:bg-gray-700/50 transition" title="Attach file"><i class="fa-solid fa-paperclip text-sm"></i></button>
+                        <button class="p-1.5 hover:text-white rounded-lg hover:bg-gray-700/50 transition" title="Web search"><i class="fa-solid fa-globe text-sm"></i></button>
+                    </div>
+                    <button id="send-btn" onclick="handleUserMessage()" class="bg-white text-black p-1.5 w-8 h-8 rounded-xl flex items-center justify-center font-bold hover:bg-gray-200 transition disabled:opacity-40 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-arrow-up text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- Disclaimer message -->
+            <div class="text-center mt-2">
+                <span class="text-[10px] text-gray-500">AI can make mistakes. Verify important info. Inspired by ChatGPT, Claude & Gemini.</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- JAVASCRIPT FOR INTERACTIVITY -->
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const messageList = document.getElementById('message-list');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        // Toggle Sidebar
+        function toggleSidebar() {
+            sidebar.classList.toggle('-ml-64');
+        }
+
+        // Auto-resize textarea
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            sendBtn.disabled = this.value.trim() === '';
+        });
+
+        // Trigger send on enter (without shift)
+        userInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if(this.value.trim() !== '') handleUserMessage();
+            }
+        });
+
+        function sendPreset(text) {
+            userInput.value = text;
+            handleUserMessage();
+        }
+
+        function startNewChat() {
+            messageList.innerHTML = '';
+            messageList.classList.add('hidden');
+            welcomeScreen.classList.remove('hidden');
+            userInput.value = '';
+            sendBtn.disabled = true;
+        }
+
+        async function getAgentResponse(userMsg) {
+            console.log(document.cookie);
+            try {
+                // sending AJAX
+                const response = await fetch('http://127.0.0.1:3001/agent', {
+                method: 'POST', // Specifies a POST request
+                headers: {
+                    'Content-Type': 'application/json' // Tells the server we are sending JSON
+                },
+                body: JSON.stringify({
+                    query: userMsg,
+                    session_id: document.cookie.split('; ').find(row => row.startsWith('session_id=')).split('=')[1]
+                })
+                });
+
+                const result = await response.json();
+                console.log('Success:', result);
+                return result.response
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function handleUserMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            // Hide welcome layout on first message
+            if (!welcomeScreen.classList.contains('hidden')) {
+                welcomeScreen.classList.add('hidden');
+                messageList.classList.remove('hidden');
+            }
+
+            // Append User Message
+            appendMessage(text, 'user');
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            sendBtn.disabled = true;
+
+            // Simulate AI Loading Response
+            showTypingIndicator();
+
+            // This is where you put the backend fetch request, prolly AJAX
+            getAgentResponse(text).then((response => {
+                console.log("YES");
+                removeTypingIndicator();
+                appendMessage(response, 'assistant');
+
+            }));
+        }
+
+        function appendMessage(text, sender) {
+            const isUser = sender === 'user';
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex gap-4 w-full ${isUser ? 'justify-end' : 'justify-start'}`;
+
+            if (!isUser) {
+                // Assistant Avatar (Claude/Gemini style)
+                messageDiv.innerHTML = `
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 to-purple-600 flex items-center justify-center text-white shrink-0 shadow">
+                        <i class="fa-solid fa-sparkles text-xs"></i>
+                    </div>
+                    <div class="flex-1 space-y-2 overflow-hidden text-gray-200 text-sm leading-relaxed pt-1">
+                        <p>${text}</p>
+                    </div>
+                `;
+            } else {
+                // User Bubble (ChatGPT style)
+                messageDiv.innerHTML = `
+                    <div class="bg-[#2b2c30] px-4 py-2.5 rounded-2xl max-w-[80%] text-gray-100 text-sm leading-relaxed">
+                        <p>${escapeHTML(text)}</p>
+                    </div>
+                `;
+            }
+
+            messageList.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'flex gap-4 w-full justify-start items-center';
+            typingDiv.innerHTML = `
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 to-purple-600 flex items-center justify-center text-white shrink-0 shadow">
+                    <i class="fa-solid fa-sparkles text-xs"></i>
+                </div>
+                <div class="flex gap-1.5 items-center py-2">
+                    <div class="w-2 h-2 rounded-full bg-gray-400 animate-bounce"></div>
+                    <div class="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:-.2s]"></div>
+                    <div class="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:-.4s]"></div>
+                </div>
+            `;
+            messageList.appendChild(typingDiv);
+            scrollToBottom();
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('chat-container');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+    </script>
+</body>
+</html>

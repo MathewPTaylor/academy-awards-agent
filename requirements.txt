@@ -1,0 +1,10 @@
+flask-sqlalchemy
+flask
+flask-cors
+langgraph
+langchain-google-genai
+python-dotenv
+langchain-core
+pydantic
+requests
+markdown

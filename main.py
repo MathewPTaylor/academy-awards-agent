@@ -1,16 +1,10 @@
-# This is a sample Python script.
+from academyagentapp import app
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+if __name__ == "__main__":
+    print(app.root_path)
+    app.run("0.0.0.0", port=3001, debug=True)
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+    "<p>Here are several categories of product names for an AI note-taking app:</p>\n<h3>Minimalist &amp; Modern</h3>\n<ul>\n<li><strong>Nota</strong></li>\n<li><strong>Scribe AI</strong></li>\n<li><strong>Trace</strong></li>\n<li><strong>Flux</strong></li>\n<li><strong>Lumino</strong></li>\n<li><strong>Kern</strong></li>\n</ul>\n<h3>Intellectual &amp; Insight-Focused</h3>\n<ul>\n<li><strong>Cogni</strong></li>\n<li><strong>ThoughtStream</strong></li>\n<li><strong>Insightly</strong></li>\n<li><strong>Mentis</strong></li>\n<li><strong>Synapse Notes</strong></li>\n<li><strong>Clarify</strong></li>\n</ul>\n<h3>Action &amp; Productivity Oriented</h3>\n<ul>\n<li><strong>FocusFlow</strong></li>\n<li><strong>DraftPad</strong></li>\n<li><strong>SnapNotes</strong></li>\n<li><strong>QuickMind</strong></li>\n<li><strong>SwiftScript</strong></li>\n<li><strong>Impulse</strong></li>\n</ul>\n<h3>Abstract &amp; Evocative</h3>\n<ul>\n<li><strong>Echo</strong></li>\n<li><strong>Haven</strong></li>\n<li><strong>Pulse</strong></li>\n<li><strong>Beacon</strong></li>\n<li><strong>Cipher</strong></li>\n<li><strong>Origin</strong></li>\n</ul>\n<h3>Intelligent &amp; \"Smart\" Personas</h3>\n<ul>\n<li><strong>WiseNote</strong></li>\n<li><strong>BrainBox</strong></li>\n<li><strong>Genie</strong></li>\n<li><strong>MentorAI</strong></li>\n<li><strong>Sage</strong></li>\n<li><strong>Scholar</strong></li>\n</ul>\n<h3>Compound Names (Tech-focused)</h3>\n<ul>\n<li><strong>NoteLogic</strong></li>\n<li><strong>MindMap AI</strong></li>\n<li><strong>DataDraft</strong></li>\n<li><strong>SmartScribe</strong></li>\n<li><strong>AutoNote</strong></li>\n<li><strong>ContextCore</strong></li>\n</ul>\n<p><strong>Tips for choosing:</strong>\n*   <strong>Short is better:</strong> Most successful apps have 1–2 syllables.\n*   <strong>Check Availability:</strong> Before settling on a name, ensure the domain name and social media handles are available.\n*   <strong>Say it out loud:</strong> Make sure it is easy to spell and pronounce so users can easily tell their friends about it.</p>"
