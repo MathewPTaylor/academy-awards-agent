@@ -1,5 +1,4 @@
 TODO:
-1. Add either a field in User that stores list of thread_ids OR new table with User and session_id pairings, can also have a field for conversation summary.
 2. Conversation side bar, Load in messages, change when session_id is created (when new chat is clicked). Deal with the cookie situation (will we still need a session cookie?)
 2. Check why some of the file paths are changed with flask (and how you can make it more robust) (fiixed the oscars.csv path already but I think there's more)
 3. Add visual errors when form data for login and signup is not valid
@@ -9,6 +8,7 @@ TODO:
 
 
 FIXED:
+1. Add either a field in User that stores list of thread_ids OR new table with User and session_id pairings, can also have a field for conversation summary.
 2. Fix code block response bug where a python comment is interpreted as an h1 tag
 3. add user logins. utilise session. Make db changes
 1. Add persistent states for sessions so chatbot can remember previous messages in the list

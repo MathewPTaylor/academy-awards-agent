@@ -45,7 +45,7 @@
             </button>
             
             <div class="text-xs font-semibold text-gray-500 px-3 pt-4 pb-2">Recent</div>
-            <div class="flex flex-col gap-1 overflow-y-auto max-h-[calc(100vh-200px)]">
+            <div id="conversation_thread_container" class="flex flex-col gap-1 overflow-y-auto max-h-[calc(100vh-200px)]">
                 <button class="text-left px-3 py-2 rounded-lg hover:bg-gray-800 text-sm truncate text-gray-300">Building a Gemini UI in HTML</button>
                 <button class="text-left px-3 py-2 rounded-lg hover:bg-gray-800 text-sm truncate text-gray-300">Tailwind layout tips</button>
                 <button class="text-left px-3 py-2 rounded-lg hover:bg-gray-800 text-sm truncate text-gray-300">Debugging JavaScript promises</button>
@@ -112,7 +112,28 @@
             </div>
 
             <!-- Dynamic Chat Messages Will Append Here -->
-            <div id="message-list" class="w-full max-w-3xl flex flex-col gap-6 hidden"></div>
+            <div id="message-list" class="w-full max-w-3xl flex flex-col gap-6 hidden">
+                {% if messages %}
+                    {% for role, message in messages %}
+                        {% if role == "user" %}
+                            <div class="flex gap-4 w-full justify-end">
+                                <div class="bg-[#2b2c30] px-4 py-2.5 rounded-2xl max-w-[80%] text-gray-100 text-sm leading-relaxed">
+                                    <p>{{ message }}</p>
+                                </div>
+                            </div>
+                        {% elif role == "assistant" %}
+                            <div class="`flex gap-4 w-full justify-start">
+                                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 to-purple-600 flex items-center justify-center text-white shrink-0 shadow">
+                                    <i class="fa-solid fa-sparkles text-xs"></i>
+                                </div>
+                                <div class="flex-1 space-y-2 overflow-hidden text-gray-200 text-sm leading-relaxed pt-1">
+                                    <p>{{ message|safe }}</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </div>
         </div>
 
         <!-- INPUT BAR AREA -->
@@ -145,6 +166,7 @@
         const messageList = document.getElementById('message-list');
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
+        var conversationID = '{{ session.get("current_conversation_id") }}';
 
         // Toggle Sidebar
         function toggleSidebar() {
@@ -190,7 +212,6 @@
                 },
                 body: JSON.stringify({
                     query: userMsg,
-                    session_id: document.cookie.split('; ').find(row => row.startsWith('session_id=')).split('=')[1]
                 })
                 });
 
@@ -221,12 +242,21 @@
             // Simulate AI Loading Response
             showTypingIndicator();
 
+            if (conversationID != null) {
+                let convoThreadsDOM = document.getElementById("conversation_thread_container");
+                let newThreadDOM = document.createElement("button");
+                newThreadDOM.className = "text-left px-3 py-2 rounded-lg hover:bg-gray-800 text-sm truncate text-gray-300";
+                newThreadDOM.innerHTML = "New Summarised Thread";
+
+                convoThreadsDOM.appendChild(newThreadDOM);
+                convoThreadsDOM.insertBefore(newThreadDOM, convoThreadsDOM.firstChild);
+            }
+
             // This is where you put the backend fetch request, prolly AJAX
             getAgentResponse(text).then((response => {
                 console.log("YES");
                 removeTypingIndicator();
                 appendMessage(response, 'assistant');
-
             }));
         }
 

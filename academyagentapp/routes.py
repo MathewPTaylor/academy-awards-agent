@@ -1,40 +1,72 @@
-from flask import render_template, request, make_response, session, redirect
+from flask import render_template, request, make_response, session, redirect, url_for
+from langchain_core.messages import HumanMessage, AIMessage
+from langgraph.types import StateSnapshot
+
 from academyagentapp.agent.agent import graph_builder
 from academyagentapp import app, db
 from academyagentapp.model import Users
 from langgraph.checkpoint.sqlite import SqliteSaver
 import markdown, hashlib, sqlite3, os
 from random import random
+from typing import List, Tuple
 
-# connecting to db
+
+# instantiating the sqlite checkpointer
 db_path = "..\\AcademyAwardsAgent\\instance\\site.db"
-print("DB PATH:", db_path)
 conn = sqlite3.connect(db_path, check_same_thread=False)
 memory = SqliteSaver(conn)
-
+# compiling the graph with the checkpointer
 checkpointed_graph = graph_builder.compile(checkpointer=memory)
 
 @app.route("/")
-def index():
+def redirect_to_new_index():
+    return redirect(url_for("index"))
+
+
+# MAIN PAGE
+@app.route("/app")
+@app.route("/app/<conversation_id>")
+def index(conversation_id=None):
     if "user_id" not in session:
-        return redirect("/login")
+        return redirect(url_for("login"))
 
-    print(session)
-    response = make_response(render_template("index.html", username=Users.get_username(session.get("user_id"))))
+    session["current_conversation_id"] = conversation_id
+    messages = None
+    if conversation_id is not None:
+        config = {"configurable": {"thread_id": conversation_id}}
+        latest_state = checkpointed_graph.get_state(config)
+        messages = get_messages_from_state(latest_state)
 
-    session_cookie = request.cookies.get("session_id")
 
-    if not session_cookie:
-        response.set_cookie("session_id", generate_session_hash(), max_age=60 * 60)  # this is in seconds
-        db.session.commit()
-
+    response = make_response(render_template("index.html", username=Users.get_username(session.get("user_id")), messages=messages))
     return response
+
+
+def get_messages_from_state(state: StateSnapshot) -> List[Tuple[str, str]]:
+    if not state.values:
+        return []
+
+    messages = []
+    print(state)
+    state_messages = state.values["messages"]
+
+    for message in state_messages:
+        if isinstance(message, HumanMessage):
+            content = message.content
+            messages.append(("user", content))
+
+        elif isinstance(message, AIMessage):
+            if message.content:
+                content = message.content[0]["text"]
+                messages.append(("assistant", markdown_to_html(content)))
+
+    return messages
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if "user_id" in session:
-        return redirect("/")
+        return redirect(url_for("index"))
 
     # get username, password and login type
     error_dict = {}
@@ -58,7 +90,7 @@ def login():
 
             if not error_dict:
                 session["user_id"] = user.id
-                return redirect("/")
+                return redirect(url_for("index"))
 
         elif mode == "signup":
             query = db.select(Users).where(Users.username == username)
@@ -77,7 +109,7 @@ def login():
                 db.session.add(new_user)
                 db.session.commit()
                 session["user_id"] = new_user.id
-                return redirect("/")
+                return redirect(url_for("index"))
 
     print("ERROR DICT:", error_dict)
     response = make_response(
@@ -92,6 +124,9 @@ def agent_response():
     # extract user query and session_id
     query: str = res.get("query", "")
     session_id: str = res.get("session_id", "")
+
+    if session_id == "":
+        return {"response": "Something went wrong. Please try again later."}
     # invoke agent if query not empty
     if query.strip() == "":
         return {"response": "Please enter a valid query."}
@@ -112,7 +147,7 @@ def agent_response():
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect("/login")
+    return redirect(url_for("login"))
 
 
 def generate_session_hash(data=None):
@@ -138,3 +173,6 @@ def add_header_sizing(html: str):
 
     return html
 
+
+def markdown_to_html(text: str):
+    return add_header_sizing(markdown.markdown(text, output_format="html", extensions=['fenced_code']))
